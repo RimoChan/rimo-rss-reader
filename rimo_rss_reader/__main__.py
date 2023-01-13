@@ -1,4 +1,3 @@
-open('a.txt', 'w').write('good')
 import re
 import io
 import os
