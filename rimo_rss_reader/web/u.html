@@ -1,0 +1,72 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="./main.js"></script>
+        <link rel="stylesheet" href="./style.css"></link>
+        <link rel="icon" href="./i.ico"></link>
+        <title>
+            rimo-rss-reader
+        </title>
+    </head>
+    <body id='app'>
+        <div id='all'>
+            <div id='订阅组'>
+                <li v-for="item of Object.keys(所有订阅组)">
+                    <a v-if="item !== 当前订阅组" @click="吃(item)">
+                        {{ item }}
+                    </a>
+                    <span v-else>
+                        {{ item }}
+                    </span>
+                    <span class='未读数'>
+                        {{ Object.values(喂[item]).filter(x => !(x._read || 假read[x.id])).length }}
+                    </span>
+                </li>
+            </div>
+            <div id='喂'>
+                <div id='功能'>
+                    <a @click="全部标为已读()">全部标为已读</a>
+                    <a @click="全部展开(true)">全部展开</a>
+                    <a @click="全部展开(false)">全部闭合</a>
+                    <a href="log?name=stdout" target="_blank">查看stdout日志</a>
+                    <a href="log?name=stderr" target="_blank">查看stderr日志</a>
+                </div>
+                <details v-bind:open="!(item['_read'] || 假read[item['id']])" v-for="item of 查看当前订阅组()" v-bind:key="item.id">
+                    <summary>
+                        <span class='feed_name'>
+                            {{ 所有订阅组[当前订阅组].find(i => i.url === item['_feed_url']).name }}
+                        </span>
+                        <span class='time'>
+                            {{format_time(item['_entry_time']*1000) }}
+                        </span>
+                        <span class='title'>
+                            {{ item['title'] }}
+                        </span>
+                    </summary>
+                    <div>
+                        <div v-html="item['summary']"></div>
+                        <a v-bind:href="item['link']" target="_blank">
+                            查看详情
+                        </a>
+                        <a v-if="!item['_read']" @click="标为已读(item)">
+                            标为已读
+                        </a>
+                        <span v-else>
+                            已读
+                        </span>
+                    </div>
+                </details>
+                <div id='已加载'>
+                    已加载 {{ Object.keys(查看当前订阅组()).length }} 条
+                </div>
+                <span v-if="没有了[当前订阅组]">
+                    没有了
+                </span>
+                <a v-else @click="加载更多()">
+                    加载更多
+                </a>
+            </div>
+        </div>
+    </body>
+</html>

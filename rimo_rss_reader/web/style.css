@@ -1,0 +1,81 @@
+body {
+    margin: 0;
+}
+
+a {
+    color: blue;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#all {
+    display: flex;
+}
+
+#功能 > a {
+    margin: 3px;
+}
+
+#订阅组 {
+    font-size: 120%;
+    flex-shrink: 0;
+    padding: 12px;
+}
+
+#喂 {
+    padding: 12px;
+    border-left: 1px solid #bbb;
+    width: 100%;
+}
+
+.未读数 {
+    font-size: 80%;
+    opacity: 0.6;
+}
+
+.未读数::before {
+    content: "(";
+}
+
+.未读数::after {
+    content: ")";
+}
+
+img {
+    border-radius: 2px;
+    max-width: 100%;
+}
+
+details {
+    border-bottom: 1px solid #bbb;
+    margin-bottom: 3px;
+    padding-bottom: 6px;
+}
+
+summary {
+    font-size: 120%;
+    font-weight: bold;
+    padding-bottom: 4px;
+}
+
+.feed_name {
+    font-size: 70%;
+    opacity: 0.6;
+}
+
+.time {
+    opacity: 0.6;
+    font-size: 70%;
+    margin-left: 20px;
+}
+
+.time::after {
+    content: "没有";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}

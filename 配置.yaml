@@ -1,0 +1,15 @@
+别的电脑也可以看: False
+端口号: 23333
+windows通知: True
+订阅组:
+  软件更新:
+    - https://rsshub.app/cpython
+    - https://rsshub.app/minecraft/version
+  Dota2更新:
+    - name: Dota2更新
+      url: https://store.steampowered.com/feeds/news/app/570?l=schinese
+      filter: ^.*(更新|Patch|patch).*$
+      interval: 3600
+  奇怪的东西:
+    - name: 猪肉价格
+      url: https://rsshub.app/pork-price
