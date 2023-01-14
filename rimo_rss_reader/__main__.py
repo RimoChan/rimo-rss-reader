@@ -154,7 +154,7 @@ def 循环():
                     f'订阅组{"、".join(更新的订阅组)}更新了，点开看看 >>',
                     icon_path=此处 / 'web\i.ico',
                     threaded=True,
-                    callback_on_click=lambda: os.system('start http://127.0.0.1:23333/u.html')
+                    callback_on_click=lambda: os.system('start http://127.0.0.1:23333/')
                 )
         time.sleep(60)
 
