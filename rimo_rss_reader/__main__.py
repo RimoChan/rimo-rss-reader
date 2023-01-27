@@ -96,7 +96,7 @@ def _相等(a, b):
 def get_feed(url):
     d = 存储(url)
     索引 = d.get('_索引', {})
-    feed = feedparser.parse(requests.get(url, timeout=15).content)
+    feed = feedparser.parse(requests.get(url, timeout=15).content, sanitize_html=False, resolve_relative_uris=False)
     entries = feed.pop('entries')
     全局存储['meta'] = {**全局存储.get('meta', {}), url: feed}
     meta[url] = feed
