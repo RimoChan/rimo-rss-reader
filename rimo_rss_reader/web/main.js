@@ -29,11 +29,11 @@ const app = Vue.createApp({
             this.当前订阅组 = x
             this.刷新()
         },
-        加载喂(多个订阅组, 最多数量, 开始时间) {
+        加载喂(多个订阅组, 最多数量, 开始时间, 不要的item) {
             for (const 订阅组 of 多个订阅组)
                 if (!this.喂[订阅组])
                     this.喂[订阅组] = {}
-            http('超喂', { 源: 多个订阅组, 最多数量, 开始时间 }, (x) => {
+            http('超喂', { 源: 多个订阅组, 最多数量, 开始时间, 不要的item }, (x) => {
                 for (const 订阅组 in x) {
                     const n = Object.keys(this.喂[订阅组]).length
                     for (const i of x[订阅组])
@@ -51,7 +51,7 @@ const app = Vue.createApp({
         加载更多() {
             o = this.查看当前订阅组()
             最后时间 = o[o.length - 1]['_entry_time']
-            this.加载喂([this.当前订阅组], 单次加载个数, 最后时间)
+            this.加载喂([this.当前订阅组], 单次加载个数, 最后时间, Object.keys(this.喂[this.当前订阅组]))
         },
         查看当前订阅组() {
             o = this.喂[this.当前订阅组]

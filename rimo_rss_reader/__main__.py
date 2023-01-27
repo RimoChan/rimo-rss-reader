@@ -14,7 +14,7 @@ from pathlib import Path
 from itertools import islice
 from functools import lru_cache, wraps
 from dataclasses import dataclass, asdict
-from typing import Optional, List
+from typing import Optional, List, Set
 
 class 假的io(io.StringIO):    # pythonw.exe 启动时，sys.stdout 会被重定向到 None，导致一些库无法正常工作，所以骗一骗它们
     write = flush = lambda *a, **k: None
@@ -159,7 +159,7 @@ def 循环():
         time.sleep(60)
 
 
-def _it(ss: List[源], 开始时间: float = 1e+100):
+def _it(ss: List[源], 开始时间: float = 1e+100, 不要的item: Set[str] = set()):
     a = {}
     for s in ss:
         for k in 存储(s.url).keys():
@@ -175,13 +175,13 @@ def _it(ss: List[源], 开始时间: float = 1e+100):
                 e['_feed_url'] = s.url
                 e['_entry_time'] = entry_time(e)
                 if not s.filter or re.fullmatch(s.filter, e['title']):
-                    if entry_time(e) < 开始时间:
+                    if entry_time(e) <= 开始时间 and e['id'] not in 不要的item:
                         es.append(e)
         yield from sorted(es, key=entry_time)[::-1]
 
 
-def it(ss: List[源], 开始时间: float = 1e+100, 最多数量: int = 100):
-    return islice(_it(ss, 开始时间), 最多数量)
+def it(ss: List[源], 开始时间: float = 1e+100, 最多数量: int = 100, 不要的item: Set[str] = set()):
+    return islice(_it(ss, 开始时间, 不要的item), 最多数量)
 
 
 def 好(rule: str, return_json=True):
@@ -214,8 +214,8 @@ flask_gzip.Gzip(app)
 
 
 @好('/超喂')
-def 超喂(源: list[str], 开始时间: float = 1e+100, 最多数量: int = 100):
-    return {i: [*it(配置['订阅组'][i], 开始时间, 最多数量)] for i in 源}
+def 超喂(源: list[str], 开始时间: float = 1e+100, 最多数量: int = 100, 不要的item: List[str] = []):
+    return {i: [*it(配置['订阅组'][i], 开始时间, 最多数量, set(不要的item))] for i in 源}
 
 
 @好('/所有订阅组')
