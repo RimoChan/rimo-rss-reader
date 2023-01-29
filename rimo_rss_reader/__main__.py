@@ -14,7 +14,7 @@ from pathlib import Path
 from itertools import islice
 from functools import lru_cache, wraps
 from dataclasses import dataclass, asdict
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Any
 
 class 假的io(io.StringIO):    # pythonw.exe 启动时，sys.stdout 会被重定向到 None，导致一些库无法正常工作，所以骗一骗它们
     write = flush = lambda *a, **k: None
@@ -93,10 +93,20 @@ def _相等(a, b):
     return a == b
 
 
+def _http_get(url: str) -> bytes:
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+    except Exception as e:
+        r = requests.get(url, headers={'user-agent': 'rimobot'}, timeout=15)
+        r.raise_for_status()
+    return r.content
+
+
 def get_feed(url):
     d = 存储(url)
     索引 = d.get('_索引', {})
-    feed = feedparser.parse(requests.get(url, timeout=15).content, sanitize_html=False, resolve_relative_uris=False)
+    feed = feedparser.parse(_http_get(url), sanitize_html=False, resolve_relative_uris=False)
     entries = feed.pop('entries')
     全局存储['meta'] = {**全局存储.get('meta', {}), url: feed}
     meta[url] = feed

@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='rimo_rss_reader',
-    version='1.0.3',
+    version='1.0.4',
     author='RimoChan',
     author_email='the@librian.net',
     description='librian',
