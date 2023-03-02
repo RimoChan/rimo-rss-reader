@@ -36,8 +36,18 @@ const app = Vue.createApp({
             http('超喂', { 源: 多个订阅组, 最多数量, 开始时间, 不要的item }, (x) => {
                 for (const 订阅组 in x) {
                     const n = Object.keys(this.喂[订阅组]).length
-                    for (const i of x[订阅组])
+                    for (const i of x[订阅组]) {
+                        try {
+                            if (i.summary) {
+                                const doc = new DOMParser().parseFromString(i.summary, "text/html")
+                                for (const x of doc.querySelectorAll("img")) {
+                                    x.setAttribute("loading", "lazy")
+                                }
+                                i.summary = doc.body.innerHTML
+                            }
+                        } catch { }
                         this.喂[订阅组][i.id] = i
+                    }
                     if (x[订阅组].length < 最多数量) {
                         this.没有了[订阅组] = true
                     }
