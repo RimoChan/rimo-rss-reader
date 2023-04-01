@@ -2,6 +2,7 @@ import re
 import io
 import os
 import sys
+import zlib
 import json
 import time
 import logging
@@ -79,10 +80,38 @@ sys.stderr = 抓捕io(sys.stderr)
 全局存储 = 超dict(Path.home()/'.rimo-rss-reader/savedata/global_storage', compress='zlib', serialize='json')
 meta = {}
 
+
+class 超dict改(超dict):
+    def __init__(self, *li, **d):
+        super().__init__(*li, **d)
+        self._缓存 = {}
+        self._缓存命中 = {}
+    def __getitem__(self, k):
+        if k in self._缓存:
+            self._缓存命中[k] = self._缓存命中.get(k, 0) + 1
+            return self._缓存[k]
+        try:
+            t = super().__getitem__(k)
+        except zlib.error:
+            logging.warning(f'<{k}>的数据损坏了')
+            return {}
+        self._缓存[k] = t
+        return t
+    def __setitem__(self, k, v):
+        self._缓存[k] = v
+        if len(self._缓存) > 512:
+            坏k = sorted(self._缓存.keys(), key=lambda k: self._缓存命中.get(k, 0))[:256]
+            for k in 坏k:
+                self._缓存.pop(k, None)
+                self._缓存命中.pop(k, None)
+            self._缓存命中 = {}
+        return super().__setitem__(k, v)
+
+
 @lru_cache(maxsize=999)
 def 存储(url):
     sha = hashlib.sha224(url.encode('utf8')).hexdigest()
-    return 超dict(Path.home()/'.rimo-rss-reader/savedata/feed'/sha, compress='zlib', serialize='json')
+    return 超dict改(Path.home()/'.rimo-rss-reader/savedata/feed'/sha, compress='zlib', serialize='json')
 
 
 def _相等(a, b):
@@ -149,8 +178,8 @@ def 循环():
                     print(f'[{datetime.datetime.now()}]【{name}】访问 {i.url}')
                     try:
                         es = get_feed(i.url)
-                    except Exception as e:
-                        logging.exception(e)
+                    except Exception:
+                        logging.exception(f'访问 {i.url} 出错了！')
                     else:
                         最后访问时间[k] = time.time()
                         es = [e for e in es if (not i.filter or re.fullmatch(i.filter, e['title']))]
@@ -201,8 +230,10 @@ def 好(rule: str, return_json=True):
             d = dict(flask.request.args)
             if flask.request.data:
                 d.update(json.loads(flask.request.data))
-            print(f'[{datetime.datetime.now()}] 调用: {f.__name__}, {d}')
+            print(f'[{datetime.datetime.now()}] 调用开始: {f.__name__}, {d}')
+            t = time.time()
             res = f(**d)
+            print(f'[{datetime.datetime.now()}] 调用结束: {f.__name__}, {d}, 耗时: {time.time() - t}')
             if return_json:
                 return app.response_class(
                     response=json.dumps(res, indent=2, default=asdict),
@@ -250,6 +281,8 @@ def 标为已读(feed_url, entry_time, id):
 def 全部标为已读(feed_url):
     for k, v in [*存储(feed_url).items()]:
         if k.startswith('_'):
+            continue
+        if all(vv.get('_read') for vv in v.values()):
             continue
         存储(feed_url)[k] = {kk: {**vv, '_read': True} for kk, vv in v.items()}
 
