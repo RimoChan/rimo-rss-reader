@@ -86,26 +86,38 @@ class 超dict改(超dict):
         super().__init__(*li, **d)
         self._缓存 = {}
         self._缓存命中 = {}
+        self._锁 = threading.Lock()
+
     def __getitem__(self, k):
-        if k in self._缓存:
-            self._缓存命中[k] = self._缓存命中.get(k, 0) + 1
-            return self._缓存[k]
-        try:
-            t = super().__getitem__(k)
-        except zlib.error:
-            logging.warning(f'<{k}>的数据损坏了')
-            return {}
-        self._缓存[k] = t
-        return t
+        with self._锁:
+            if k in self._缓存:
+                self._缓存命中[k] = self._缓存命中.get(k, 0) + 1
+                return self._缓存[k]
+            try:
+                t = super().__getitem__(k)
+            except zlib.error:
+                logging.warning(f'<{k}>的数据损坏了')
+                return {}
+            self._缓存[k] = t
+            return t
+
     def __setitem__(self, k, v):
-        self._缓存[k] = v
-        if len(self._缓存) > 512:
-            坏k = sorted(self._缓存.keys(), key=lambda k: self._缓存命中.get(k, 0))[:256]
-            for k in 坏k:
-                self._缓存.pop(k, None)
-                self._缓存命中.pop(k, None)
-            self._缓存命中 = {}
-        return super().__setitem__(k, v)
+        with self._锁:
+            assert isinstance(v, dict)
+            if k == '_索引':
+                for kk, vv in v.items():
+                    assert isinstance(kk, str) and isinstance(vv, str)
+            else:
+                for kk, vv in v.items():
+                    assert isinstance(kk, str) and isinstance(vv, dict)
+            self._缓存[k] = v
+            if len(self._缓存) > 512:
+                坏k = sorted(self._缓存.keys(), key=lambda k: self._缓存命中.get(k, 0))[:256]
+                for k in 坏k:
+                    self._缓存.pop(k, None)
+                    self._缓存命中.pop(k, None)
+                self._缓存命中 = {}
+            return super().__setitem__(k, v)
 
 
 @lru_cache(maxsize=999)
