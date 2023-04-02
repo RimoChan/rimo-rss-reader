@@ -88,45 +88,56 @@ class 超dict改(超dict):
         self._缓存命中 = {}
         self._锁 = threading.Lock()
 
+    def _assert(self, k, v):
+        assert isinstance(v, dict)
+        if k == '_索引':
+            for kk, vv in v.items():
+                assert isinstance(kk, str) and isinstance(vv, str), f'{k} 的值不能是 {v}'
+        else:
+            for kk, vv in v.items():
+                assert isinstance(kk, str) and isinstance(vv, dict), f'{k} 的值不能是 {v}'
+
+    def _清理缓存(self):
+        if len(self._缓存) > 512:
+            坏k = sorted(self._缓存.keys(), key=lambda k: self._缓存命中.get(k, 0))[:256]
+            for k in 坏k:
+                self._缓存.pop(k, None)
+                self._缓存命中.pop(k, None)
+            self._缓存命中 = {}
+
     def __getitem__(self, k):
         with self._锁:
             if k in self._缓存:
+                v = self._缓存[k]
+                self._assert(k, v)
                 self._缓存命中[k] = self._缓存命中.get(k, 0) + 1
-                return self._缓存[k]
+                return v
             try:
-                t = super().__getitem__(k)
+                v = super().__getitem__(k)
             except zlib.error:
                 logging.warning(f'<{k}>的数据损坏了')
                 return {}
-            self._缓存[k] = t
-            return t
+            else:
+                self._assert(k, v)
+                self._清理缓存()
+                self._缓存[k] = v
+                return v
 
     def __setitem__(self, k, v):
         with self._锁:
-            assert isinstance(v, dict)
-            if k == '_索引':
-                for kk, vv in v.items():
-                    assert isinstance(kk, str) and isinstance(vv, str)
-            else:
-                for kk, vv in v.items():
-                    assert isinstance(kk, str) and isinstance(vv, dict)
+            self._assert(k, v)
+            self._清理缓存()
             self._缓存[k] = v
-            if len(self._缓存) > 512:
-                坏k = sorted(self._缓存.keys(), key=lambda k: self._缓存命中.get(k, 0))[:256]
-                for k in 坏k:
-                    self._缓存.pop(k, None)
-                    self._缓存命中.pop(k, None)
-                self._缓存命中 = {}
             return super().__setitem__(k, v)
 
 
-@lru_cache(maxsize=999)
+@lru_cache(maxsize=9999)
 def 存储(url):
     sha = hashlib.sha224(url.encode('utf8')).hexdigest()
     return 超dict改(Path.home()/'.rimo-rss-reader/savedata/feed'/sha, compress='zlib', serialize='json')
 
 
-def _相等(a, b):
+def _相等(a, b) -> bool:
     a = json.loads(json.dumps(a))
     b = json.loads(json.dumps(b))
     del a['_fetch_time']
